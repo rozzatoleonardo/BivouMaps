@@ -1,0 +1,185 @@
+name: github-web-craft
+version: 2.0.0
+description: >
+  App Builder autonomo per siti web professionali su GitHub Pages.
+  Opera come un sistema intelligente che progetta, costruisce, valida e
+  apprende dai propri errori. Capace di auto-modificare le proprie
+  istruzioni operative quando identifica pattern ricorrenti o soluzioni
+  migliori, evolvendo continuamente la qualità dell'output.
+
+triggers:
+  keywords:
+    - crea sito
+    - github pages
+    - web app statica
+    - landing page
+    - interattivo
+    - portfolio
+    - sito professionale
+    - app builder
+    - costruisci sito
+    - genera sito
+
+# ─────────────────────────────────────────────────────────────────
+# WORKFLOW PRINCIPALE: Ciclo Build → Validate → Learn → Evolve
+# ─────────────────────────────────────────────────────────────────
+workflow:
+  mode: autonomous_app_builder
+  phases:
+
+    # ── FASE 1: Comprensione e Strategia ──
+    - id: discovery
+      name: "Discovery & Brief Intelligente"
+      description: >
+        Analisi approfondita della richiesta. Se mancano informazioni
+        critiche, l'agente le deduce dal contesto o chiede conferma.
+        Produce un documento di brief interno con: obiettivo, target,
+        tono di voce, palette e struttura sezioni.
+      outputs:
+        - brief_documento_interno
+        - sitemap_sezioni
+
+    # ── FASE 2: Architettura dell'App ──
+    - id: architecture
+      name: "Architettura & Scaffolding"
+      description: >
+        Definizione della struttura file/cartelle, scelta dello stack
+        (single-file vs modulare), setup di Tailwind (CDN o Vite),
+        creazione dello scaffolding iniziale.
+      outputs:
+        - struttura_directory
+        - file_base_generati
+
+    # ── FASE 3: Build Completo ──
+    - id: build
+      name: "Build Completo"
+      description: >
+        Generazione di tutto il codice: HTML semantico, CSS/Tailwind,
+        JavaScript interattivo, copy definitivo, SEO metadata,
+        Schema.org JSON-LD. Nessun placeholder ammesso.
+      outputs:
+        - codice_completo
+        - file_pronti_per_deploy
+
+    # ── FASE 4: Validazione Automatica ──
+    - id: validate
+      name: "Validazione & Quality Gate"
+      description: >
+        Verifica automatica del codice generato tramite checklist
+        interna. Controlla: HTML valido, link non rotti, accessibilità
+        base (ARIA), responsive breakpoints, funzionalità JS, percorsi
+        relativi, assenza di placeholder.
+      quality_gates:
+        - html_syntax_valid
+        - no_broken_relative_paths
+        - no_placeholder_text
+        - accessibility_aria_labels
+        - responsive_breakpoints_tested
+        - js_no_console_errors
+        - seo_meta_complete
+        - forms_have_real_endpoints
+      outputs:
+        - validation_report
+        - errori_trovati
+
+    # ── FASE 5: Fix Automatico ──
+    - id: auto_fix
+      name: "Auto-Fix & Correzione"
+      description: >
+        Per ogni errore trovato nella fase di validazione, applica
+        la correzione automatica. Se l'errore è noto nel journal,
+        applica la soluzione già appresa. Se è nuovo, ragiona sulla
+        soluzione, applicala e registrala.
+      triggers:
+        - validation_errors_found
+      outputs:
+        - codice_corretto
+        - fix_applicati
+
+    # ── FASE 6: Apprendimento ──
+    - id: learn
+      name: "Apprendimento & Journaling"
+      description: >
+        Dopo ogni fix, registra l'errore e la soluzione nel file
+        `error_journal.md`. Analizza pattern ricorrenti. Se lo stesso
+        tipo di errore si ripete 2+ volte, attiva la fase di
+        auto-evoluzione.
+      outputs:
+        - journal_aggiornato
+        - pattern_identificati
+
+    # ── FASE 7: Auto-Evoluzione della Skill ──
+    - id: evolve
+      name: "Auto-Evoluzione Skill"
+      description: >
+        Quando un pattern di errore è confermato (ricorrenza >= 2),
+        l'agente modifica il file `instructions.md` per incorporare
+        la prevenzione di quell'errore come regola permanente. Ogni
+        modifica viene loggata nel `changelog.md` con motivazione.
+      triggers:
+        - pattern_ricorrente_confermato
+      safeguards:
+        - non_rimuovere_regole_esistenti
+        - solo_aggiungere_o_raffinare
+        - loggare_ogni_modifica_nel_changelog
+      outputs:
+        - instructions_aggiornate
+        - changelog_aggiornato
+
+    # ── FASE 8: Deploy Readiness ──
+    - id: deploy_ready
+      name: "Preparazione Deploy GitHub Pages"
+      description: >
+        Verifica finale compatibilità GitHub Pages: percorsi relativi,
+        nessun server-side, README con istruzioni deploy, .nojekyll
+        se necessario.
+      outputs:
+        - progetto_pronto_deploy
+        - istruzioni_deploy
+
+# ─────────────────────────────────────────────────────────────────
+# SISTEMA DI AUTOAPPRENDIMENTO
+# ─────────────────────────────────────────────────────────────────
+self_learning:
+  enabled: true
+  journal_file: ".antigravity/skills/github-web-craft/error_journal.md"
+  changelog_file: ".antigravity/skills/github-web-craft/changelog.md"
+  instructions_file: ".antigravity/skills/github-web-craft/instructions.md"
+
+  rules:
+    - id: log_every_error
+      description: >
+        Ogni errore incontrato durante la validazione o segnalato
+        dall'utente DEVE essere registrato nel journal con categoria,
+        descrizione, causa root e soluzione applicata.
+
+    - id: detect_patterns
+      description: >
+        Dopo ogni nuovo entry nel journal, analizza gli errori
+        precedenti per identificare pattern ricorrenti (stessa
+        categoria, stessa causa root).
+
+    - id: evolve_on_pattern
+      description: >
+        Se un pattern si ripete 2 o più volte, modifica
+        instructions.md aggiungendo una regola preventiva specifica.
+        Non rimuovere MAI regole esistenti, solo aggiungere o
+        raffinare.
+
+    - id: changelog_transparency
+      description: >
+        Ogni modifica a instructions.md deve essere loggata in
+        changelog.md con: data, motivazione, pattern che l'ha
+        generata e diff concettuale della modifica.
+
+  error_categories:
+    - html_structure
+    - css_styling
+    - javascript_runtime
+    - accessibility
+    - responsive_layout
+    - seo_metadata
+    - github_pages_compatibility
+    - form_functionality
+    - performance
+    - content_quality

@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="it" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BivouMaps — Bivacchi italiani</title>
+    <meta name="description" content="Esplora i bivacchi del Triveneto su mappa interattiva. Filtra per gruppo montuoso e difficoltà, scopri dotazioni e itinerari di accesso dettagliati.">
+    <meta name="keywords" content="bivacchi, dolomiti, triveneto, escursionismo, montagna, trekking, rifugi, CAI, ferrata, pale san martino, marmarole, schiara, civetta">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="BivouMaps">
+    <meta property="og:description" content="Database interattivo e guida ai bivacchi del Triveneto. Mappa, filtri e itinerari di accesso.">
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="it_IT">
+
+    <!-- Schema.org JSON-LD -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Bivacchi Triveneto",
+        "description": "Database interattivo e guida ai bivacchi del Triveneto con mappa, filtri e itinerari di accesso",
+        "applicationCategory": "TravelApplication",
+        "operatingSystem": "Web",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" },
+        "author": { "@type": "Organization", "name": "Bivacchi Triveneto" }
+    }
+    </script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Custom Styles -->
+    <style>
+        /* ── Scrollbar personalizzata ── */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+        .dark ::-webkit-scrollbar-thumb { background: #475569; }
+        .dark ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+        /* ── Leaflet overrides ── */
+        .leaflet-popup-content-wrapper {
+            border-radius: 12px !important;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15) !important;
+            padding: 0 !important;
+            overflow: hidden;
+        }
+        .leaflet-popup-content { margin: 0 !important; width: 280px !important; }
+        .leaflet-popup-tip { box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important; }
+        .dark .leaflet-popup-content-wrapper { background: #1e293b !important; color: #e2e8f0 !important; }
+        .dark .leaflet-popup-tip { background: #1e293b !important; }
+        .dark .leaflet-control-zoom a { background: #1e293b !important; color: #e2e8f0 !important; border-color: #334155 !important; }
+        .dark .leaflet-control-attribution { background: rgba(15,23,42,0.8) !important; color: #94a3b8 !important; }
+        .dark .leaflet-control-attribution a { color: #94a3b8 !important; }
+
+        /* ── Mappa dark mode filter ── */
+        .dark #map .leaflet-tile-pane { filter: brightness(0.75) contrast(1.1) saturate(0.85); }
+
+        /* ── Animazioni ── */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes scaleIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(100%); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in-up { animation: fadeInUp 0.4s ease-out both; }
+        .animate-fade-in { animation: fadeIn 0.3s ease-out both; }
+        .animate-scale-in { animation: scaleIn 0.3s ease-out both; }
+        .animate-slide-up { animation: slideUp 0.35s cubic-bezier(0.16,1,0.3,1) both; }
+
+        /* ── Stagger per le card ── */
+        .card-stagger:nth-child(1) { animation-delay: 0ms; }
+        .card-stagger:nth-child(2) { animation-delay: 50ms; }
+        .card-stagger:nth-child(3) { animation-delay: 100ms; }
+        .card-stagger:nth-child(4) { animation-delay: 150ms; }
+        .card-stagger:nth-child(5) { animation-delay: 200ms; }
+        .card-stagger:nth-child(6) { animation-delay: 250ms; }
+        .card-stagger:nth-child(7) { animation-delay: 300ms; }
+        .card-stagger:nth-child(8) { animation-delay: 350ms; }
+        .card-stagger:nth-child(9) { animation-delay: 400ms; }
+        .card-stagger:nth-child(10) { animation-delay: 450ms; }
+
+        /* ── Marker pulse ── */
+        @keyframes markerPulse {
+            0% { box-shadow: 0 0 0 0 rgba(16,185,129,0.5); }
+            70% { box-shadow: 0 0 0 12px rgba(16,185,129,0); }
+            100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
+        }
+        .marker-active { animation: markerPulse 1.5s infinite; }
+
+        /* ── Accordion ── */
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.35s cubic-bezier(0.16,1,0.3,1), padding 0.35s ease;
+        }
+        .accordion-content.open {
+            max-height: 500px;
+            padding-top: 0.75rem;
+            padding-bottom: 0.75rem;
+        }
+
+        /* ── Card attiva ── */
+        .bivacco-card.active {
+            ring: 2px;
+            box-shadow: 0 0 0 2px #10b981, 0 4px 12px rgba(16,185,129,0.2);
+        }
+
+        /* ── Badge glow ── */
+        .badge-e { background: linear-gradient(135deg, #d1fae5, #a7f3d0); color: #065f46; }
+        .badge-ee { background: linear-gradient(135deg, #fef3c7, #fde68a); color: #92400e; }
+        .badge-eea { background: linear-gradient(135deg, #ffe4e6, #fecdd3); color: #9f1239; }
+
+        /* ── Mobile drawer (rimosso per modale sempre centrato) ── */
+    </style>
+</head>
+
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-sans transition-colors duration-300">
+
+    <!-- ═══════════════════════════════════════════════════ -->
+    <!-- NAVBAR                                             -->
+    <!-- ═══════════════════════════════════════════════════ -->
+    <nav id="navbar" class="fixed top-0 left-0 right-0 z-[1000] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/60 dark:border-slate-700/60 transition-all duration-300">
+        <div class="flex items-center justify-between px-4 lg:px-6 h-16">
+            <!-- Logo + Titolo -->
+            <div class="flex items-center gap-3 min-w-0">
+                <div class="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/25 flex-shrink-0">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 21l6-6 3 3 6-9 3 3"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 3l3 6 3-6"/>
+                    </svg>
+                </div>
+                <div class="min-w-0">
+                    <h1 class="text-base lg:text-lg font-bold text-slate-900 dark:text-white truncate leading-tight">BivouMaps</h1>
+                    <p class="text-[11px] text-slate-500 dark:text-slate-400 hidden sm:block leading-none">Bivacchi italiani</p>
+                </div>
+            </div>
+
+            <!-- Barra di Ricerca -->
+            <div class="flex-1 max-w-md mx-4 hidden sm:block">
+                <div class="relative">
+                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+                    </svg>
+                    <input id="search-input" type="text" placeholder="Cerca bivacco o gruppo montuoso..."
+                        class="w-full pl-10 pr-4 py-2 text-sm rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all duration-200"
+                        aria-label="Cerca bivacchi per nome o gruppo montuoso">
+                </div>
+            </div>
+
+            <!-- Contatore + Dark Mode -->
+            <div class="flex items-center gap-3">
+                <div id="counter-badge" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-xs font-semibold">
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 0115 0z"/></svg>
+                    <span id="counter-text">10 bivacchi</span>
+                </div>
+                <button id="dark-mode-toggle" aria-label="Attiva/disattiva modalità scura"
+                    class="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-all duration-200">
+                    <!-- Sole (light mode) -->
+                    <svg id="icon-sun" class="w-5 h-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+                    </svg>
+                    <!-- Luna (dark mode) -->
+                    <svg id="icon-moon" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Barra di ricerca mobile (sotto navbar) -->
+        <div class="sm:hidden px-4 pb-3">
+            <div class="relative">
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+                </svg>
+                <input id="search-input-mobile" type="text" placeholder="Cerca bivacco..."
+                    class="w-full pl-10 pr-4 py-2 text-sm rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all"
+                    aria-label="Cerca bivacchi (mobile)">
+            </div>
+        </div>
+    </nav>
+
+    <!-- ═══════════════════════════════════════════════════ -->
+    <!-- TAB MOBILE (Lista / Mappa)                         -->
+    <!-- ═══════════════════════════════════════════════════ -->
+    <div id="mobile-tabs" class="md:hidden fixed z-[999] left-0 right-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-lg border-b border-slate-200/60 dark:border-slate-700/60"
+         style="top: calc(4rem + 44px);">
+        <div class="flex">
+            <button id="tab-list" class="flex-1 py-2.5 text-sm font-semibold text-emerald-600 dark:text-emerald-400 border-b-2 border-emerald-500 transition-all" aria-label="Mostra lista bivacchi">
+                <span class="flex items-center justify-center gap-1.5">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+                    Lista
+                </span>
+            </button>
+            <button id="tab-map" class="flex-1 py-2.5 text-sm font-semibold text-slate-500 dark:text-slate-400 border-b-2 border-transparent transition-all" aria-label="Mostra mappa">
+                <span class="flex items-center justify-center gap-1.5">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+                    Mappa
+                </span>
+            </button>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════ -->
+    <!-- CONTENUTO PRINCIPALE (Split Screen)                -->
+    <!-- ═══════════════════════════════════════════════════ -->
+    <main id="main-content" class="flex md:h-[calc(100vh-4rem)] mt-16">
+
+        <!-- ── SIDEBAR ── -->
+        <aside id="sidebar" class="w-full md:w-[420px] lg:w-[440px] flex-shrink-0 overflow-y-auto bg-white dark:bg-slate-900 border-r border-slate-200/60 dark:border-slate-700/40 mt-[44px] md:mt-0 relative z-10">
+
+            <!-- Filtri -->
+            <div id="filters-section" class="sticky top-0 z-10 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-b border-slate-100 dark:border-slate-800 p-4 space-y-3">
+
+                <!-- Filtro: Regione -->
+                <div>
+                    <label for="filter-regione" class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Regione</label>
+                    <select id="filter-regione"
+                        class="w-full px-3 py-2 text-sm rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all cursor-pointer"
+                        aria-label="Filtra per regione">
+                        <option value="">Tutte le regioni</option>
+                    </select>
+                </div>
+
+                <!-- Filtro: Gruppo Montuoso -->
+                <div>
+                    <label for="filter-gruppo" class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Gruppo Montuoso</label>
+                    <select id="filter-gruppo"
+                        class="w-full px-3 py-2 text-sm rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all cursor-pointer"
+                        aria-label="Filtra per gruppo montuoso">
+                        <option value="">Tutti i gruppi</option>
+                    </select>
+                </div>
+
+                <!-- Filtro: Difficoltà (pillole) -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Difficoltà</label>
+                    <div class="flex gap-2" role="group" aria-label="Filtra per difficoltà">
+                        <button data-diff="E" class="diff-pill flex-1 px-3 py-1.5 text-xs font-bold rounded-lg border-2 border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-400 bg-transparent hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-all duration-200" aria-label="Filtra escursionistico">E</button>
+                        <button data-diff="EE" class="diff-pill flex-1 px-3 py-1.5 text-xs font-bold rounded-lg border-2 border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-400 bg-transparent hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-all duration-200" aria-label="Filtra escursionisti esperti">EE</button>
+                        <button data-diff="EEA" class="diff-pill flex-1 px-3 py-1.5 text-xs font-bold rounded-lg border-2 border-rose-300 dark:border-rose-700 text-rose-700 dark:text-rose-400 bg-transparent hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-all duration-200" aria-label="Filtra attrezzato/ferrata">EEA</button>
+                    </div>
+                </div>
+
+                <!-- Filtro: Toggle rapidi -->
+                <div class="flex gap-3">
+                    <label class="flex items-center gap-2 cursor-pointer group">
+                        <input type="checkbox" id="filter-acqua" class="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-emerald-500 focus:ring-emerald-500/30 cursor-pointer">
+                        <span class="text-xs text-slate-600 dark:text-slate-300 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                            <svg class="w-3.5 h-3.5 inline mr-0.5 -mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3c-4.97 5.5-7 8.5-7 12a7 7 0 1014 0c0-3.5-2.03-6.5-7-12z"/></svg>
+                            Con acqua
+                        </span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer group">
+                        <input type="checkbox" id="filter-posti" class="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-emerald-500 focus:ring-emerald-500/30 cursor-pointer">
+                        <span class="text-xs text-slate-600 dark:text-slate-300 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                            <svg class="w-3.5 h-3.5 inline mr-0.5 -mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19H5a2 2 0 01-2-2V7a2 2 0 012-2h14a2 2 0 012 2v4"/><path d="M2 10h20M9 19V7"/></svg>
+                            Posti &gt; 6
+                        </span>
+                    </label>
+                </div>
+
+                <!-- Pulsante reset -->
+                <button id="reset-filters" class="w-full py-1.5 text-xs font-medium text-slate-400 dark:text-slate-500 hover:text-rose-500 dark:hover:text-rose-400 transition-colors hidden" aria-label="Rimuovi tutti i filtri">
+                    ✕ Rimuovi filtri
+                </button>
+            </div>
+
+            <!-- Lista Card -->
+            <div id="card-list" class="p-4 space-y-3">
+                <!-- Card generate via JS -->
+            </div>
+
+            <!-- Empty State -->
+            <div id="empty-state" class="hidden p-8 text-center">
+                <svg class="w-16 h-16 mx-auto text-slate-300 dark:text-slate-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <p class="text-slate-500 dark:text-slate-400 font-medium">Nessun bivacco trovato</p>
+                <p class="text-slate-400 dark:text-slate-500 text-sm mt-1">Prova a modificare i filtri di ricerca</p>
+            </div>
+        </aside>
+
+        <!-- ── MAPPA ── -->
+        <div id="map-wrapper" class="flex-1 relative hidden md:block">
+            <div id="map" class="w-full h-full"></div>
+        </div>
+    </main>
+
+    <!-- ═══════════════════════════════════════════════════ -->
+    <!-- MODALE DETTAGLIO BIVACCO                           -->
+    <!-- ═══════════════════════════════════════════════════ -->
+    <div id="detail-modal" class="fixed inset-0 z-[2000] hidden flex-col items-center justify-center p-4 sm:p-6" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <!-- Backdrop -->
+        <div id="modal-backdrop" class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+
+        <!-- Panel -->
+        <div class="modal-panel relative w-full max-w-2xl max-h-[90vh] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl overflow-y-auto animate-scale-in z-10 flex flex-col">
+
+            <!-- Header modale -->
+            <div class="sticky top-0 z-20 bg-gradient-to-br from-emerald-600 to-teal-700 dark:from-emerald-800 dark:to-teal-900 text-white p-5 rounded-t-2xl flex-shrink-0">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <h2 id="modal-title" class="text-xl font-bold"></h2>
+                        <p id="modal-gruppo" class="text-emerald-200 text-sm mt-0.5"></p>
+                    </div>
+                    <button id="modal-close" class="p-1.5 hover:bg-white/20 rounded-lg transition-colors" aria-label="Chiudi finestra dettagli">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+                <!-- Stats rapide -->
+                <div class="flex gap-4 mt-4 text-sm">
+                    <div class="flex items-center gap-1.5">
+                        <svg class="w-4 h-4 text-emerald-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 21l6-6 3 3 6-9 3 3"/></svg>
+                        <span id="modal-quota" class="font-semibold"></span>
+                    </div>
+                    <div id="modal-badge-diff" class="px-2 py-0.5 rounded-md text-xs font-bold"></div>
+                </div>
+            </div>
+
+            <!-- Corpo modale -->
+            <div class="p-5 space-y-5">
+
+                <!-- Coordinate copiabili -->
+                <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                    <div class="flex items-center gap-2 text-sm">
+                        <svg class="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 0115 0z"/></svg>
+                        <span id="modal-coords" class="font-mono text-slate-600 dark:text-slate-300"></span>
+                    </div>
+                    <button id="copy-coords" class="flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-lg transition-colors" aria-label="Copia coordinate GPS">
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                        <span id="copy-label">Copia</span>
+                    </button>
+                </div>
+
+                <!-- Stato apertura e acqua -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                        <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">Apertura</p>
+                        <p id="modal-apertura" class="text-sm font-medium text-slate-700 dark:text-slate-200"></p>
+                    </div>
+                    <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                        <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">Posti letto</p>
+                        <p id="modal-tipologia" class="text-sm font-medium text-slate-700 dark:text-slate-200"></p>
+                    </div>
+                </div>
+
+                <!-- Acqua -->
+                <div class="p-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+                    <div class="flex items-start gap-2">
+                        <svg class="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3c-4.97 5.5-7 8.5-7 12a7 7 0 1014 0c0-3.5-2.03-6.5-7-12z"/></svg>
+                        <p id="modal-acqua" class="text-sm text-blue-800 dark:text-blue-200"></p>
+                    </div>
+                </div>
+
+                <!-- Dotazioni -->
+                <div>
+                    <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3">Dotazioni</h3>
+                    <div id="modal-dotazioni" class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                        <!-- Generato via JS -->
+                    </div>
+                </div>
+
+                <!-- Itinerari di Accesso -->
+                <div>
+                    <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3">Itinerari di Accesso</h3>
+                    <div id="modal-itinerari" class="space-y-2">
+                        <!-- Accordion generati via JS -->
+                    </div>
+                </div>
+
+                <!-- Disclaimer Sicurezza -->
+                <div class="p-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+                    <div class="flex items-start gap-2.5">
+                        <svg class="w-5 h-5 text-amber-500 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
+                        <div>
+                            <p class="font-semibold text-amber-800 dark:text-amber-200 text-sm">Avvertenza per la Sicurezza</p>
+                            <p class="text-amber-700 dark:text-amber-300 text-xs mt-1 leading-relaxed">L'escursionismo in alta montagna comporta rischi oggettivi. Verifica sempre le condizioni meteo e del percorso prima di partire. Porta equipaggiamento adeguato, acqua, cibo, kit di primo soccorso e mezzi di comunicazione. La responsabilità della tua sicurezza è esclusivamente personale.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════ -->
+    <!-- BACK TO TOP                                        -->
+    <!-- ═══════════════════════════════════════════════════ -->
+    <button id="back-to-top" aria-label="Torna in alto"
+        class="fixed bottom-6 right-6 z-[900] p-3 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/30 transition-all duration-300 opacity-0 translate-y-4 pointer-events-none">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"/></svg>
+    </button>
+
+    <!-- ═══════════════════════════════════════════════════ -->
+    <!-- SCRIPTS                                            -->
+    <!-- ═══════════════════════════════════════════════════ -->
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <!-- Dati Bivacchi -->
+    <script src="./data/bivacchi.js"></script>
+
+    <!-- App Logic -->
+    <script>
+    (function() {
+        'use strict';
+
+        /* ══════════════════════════════════════════════════
+           STATE
+           ══════════════════════════════════════════════════ */
+        const state = {
+            allData: [],
+            filteredData: [],
+            markers: {},
+            activeCardId: null,
+            activeDiffFilters: new Set(),
+            map: null,
+            mobileView: 'list'  // 'list' | 'map'
+        };
+
+        /* ══════════════════════════════════════════════════
+           DOM REFS
+           ══════════════════════════════════════════════════ */
+        const $ = (sel) => document.querySelector(sel);
+        const $$ = (sel) => document.querySelectorAll(sel);
+
+        const dom = {
+            searchInput: $('#search-input'),
+            searchInputMobile: $('#search-input-mobile'),
+            filterRegione: $('#filter-regione'),
+            filterGruppo: $('#filter-gruppo'),
+            filterAcqua: $('#filter-acqua'),
+            filterPosti: $('#filter-posti'),
+            resetFilters: $('#reset-filters'),
+            cardList: $('#card-list'),
+            emptyState: $('#empty-state'),
+            counterText: $('#counter-text'),
+            darkToggle: $('#dark-mode-toggle'),
+            iconSun: $('#icon-sun'),
+            iconMoon: $('#icon-moon'),
+            modal: $('#detail-modal'),
+            modalBackdrop: $('#modal-backdrop'),
+            modalClose: $('#modal-close'),
+            backToTop: $('#back-to-top'),
+            sidebar: $('#sidebar'),
+            mapWrapper: $('#map-wrapper'),
+            tabList: $('#tab-list'),
+            tabMap: $('#tab-map'),
+        };
+
+        /* ══════════════════════════════════════════════════
+           INIT
+           ══════════════════════════════════════════════════ */
+        function init() {
+            state.allData = window.BIVACCHI_DATA || [];
+            state.filteredData = [...state.allData];
+
+            initDarkMode();
+            initMap();
+            populateRegioneFilter();
+            populateGroupFilter();
+            renderCards(state.filteredData);
+            addMarkers(state.filteredData);
+            bindEvents();
+            fitMapToMarkers();
+        }
+
+        /* ══════════════════════════════════════════════════
+           DARK MODE
+           ══════════════════════════════════════════════════ */
+        function initDarkMode() {
+            const saved = localStorage.getItem('bivacchi-dark-mode');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const isDark = saved !== null ? saved === 'true' : prefersDark;
+            applyDarkMode(isDark);
+        }
+
+        function applyDarkMode(isDark) {
+            document.documentElement.classList.toggle('dark', isDark);
+            dom.iconSun.classList.toggle('hidden', !isDark);
+            dom.iconMoon.classList.toggle('hidden', isDark);
+            localStorage.setItem('bivacchi-dark-mode', isDark);
+        }
+
+        /* ══════════════════════════════════════════════════
+           MAP (Leaflet)
+           ══════════════════════════════════════════════════ */
+        function initMap() {
+            state.map = L.map('map', {
+                zoomControl: true,
+                scrollWheelZoom: true,
+                attributionControl: true
+            }).setView([46.25, 11.50], 9);
+
+            // Satellite — Esri World Imagery (aspetto naturalistico)
+            const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                maxZoom: 18,
+                attribution: '© <a href="https://www.esri.com">Esri</a> · Imagery'
+            });
+
+            // Topografica — OpenTopoMap
+            const topo = L.tileLayer('https://tile.opentopomap.org/{z}/{x}/{y}.png', {
+                maxZoom: 17,
+                attribution: '© <a href="https://opentopomap.org">OpenTopoMap</a> · © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            });
+
+            // Etichette overlay per satellite
+            const labels = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
+                maxZoom: 18,
+                attribution: '',
+                pane: 'overlayPane'
+            });
+
+            // Default: satellite + labels
+            satellite.addTo(state.map);
+            labels.addTo(state.map);
+
+            // Layer control
+            const baseMaps = {
+                "🛰️ Satellite": satellite,
+                "🏔️ Topografica": topo
+            };
+            L.control.layers(baseMaps, { "📍 Etichette": labels }, { position: 'topright' }).addTo(state.map);
+        }
+
+        function createMarkerIcon(difficulty, isActive) {
+            const colors = {
+                'E':   { bg: '#10b981', ring: '#d1fae5' },
+                'EE':  { bg: '#f59e0b', ring: '#fef3c7' },
+                'EEA': { bg: '#f43f5e', ring: '#ffe4e6' }
+            };
+            const c = colors[difficulty] || colors['E'];
+            const size = isActive ? 36 : 28;
+            const dotSize = isActive ? 18 : 12;
+            const ringWidth = isActive ? 3 : 2;
+
+            return L.divIcon({
+                className: 'custom-marker',
+                html: `<div style="width:${size}px;height:${size}px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:${c.ring};border:${ringWidth}px solid ${c.bg};box-shadow: 0 0 6px rgba(0,0,0,0.5);${isActive ? 'animation:markerPulse 1.5s infinite;' : ''}transition:all 0.3s ease;">
+                    <div style="width:${dotSize}px;height:${dotSize}px;border-radius:50%;background:${c.bg};box-shadow: 0 1px 2px rgba(0,0,0,0.4);"></div>
+                </div>`,
+                iconSize: [size, size],
+                iconAnchor: [size/2, size/2],
+                popupAnchor: [0, -(size/2 + 4)]
+            });
+        }
+
+        function addMarkers(data) {
+            // Rimuovi marker esistenti
+            Object.values(state.markers).forEach(m => state.map.removeLayer(m));
+            state.markers = {};
+
+            data.forEach(b => {
+                const marker = L.marker(
+                    [b.coordinate.lat, b.coordinate.lng],
+                    { icon: createMarkerIcon(b.difficolta_accesso, false) }
+                ).addTo(state.map);
+
+                // Popup contenuto
+                marker.bindPopup(createPopupContent(b), {
+                    maxWidth: 280,
+                    closeButton: false
+                });
+
+                marker.on('click', () => {
+                    setActiveCard(b.id);
+                    scrollToCard(b.id);
+                });
+
+                state.markers[b.id] = marker;
+            });
+        }
+
+        function createPopupContent(b) {
+            const badgeClass = b.difficolta_accesso === 'E' ? 'badge-e' : b.difficolta_accesso === 'EE' ? 'badge-ee' : 'badge-eea';
+            return `
+                <div class="p-4 font-sans">
+                    <div class="flex items-start justify-between mb-2">
+                        <h3 class="font-bold text-base text-slate-900 dark:text-white leading-tight">${b.nome}</h3>
+                        <span class="${badgeClass} px-1.5 py-0.5 rounded text-[10px] font-bold ml-2 flex-shrink-0">${b.difficolta_accesso}</span>
+                    </div>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mb-3">${b.gruppo_montuoso}</p>
+                    <div class="flex items-center gap-3 text-xs text-slate-600 dark:text-slate-300 mb-3">
+                        <span class="flex items-center gap-1">
+                            <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 21l6-6 3 3 6-9 3 3"/></svg>
+                            ${b.quota_m} m
+                        </span>
+                        <span class="flex items-center gap-1">
+                            <svg class="w-3.5 h-3.5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19H5a2 2 0 01-2-2V7a2 2 0 012-2h14a2 2 0 012 2v4"/></svg>
+                            ${b.posti_letto.numero} posti
+                        </span>
+                    </div>
+                    <button data-open-modal="${b.id}" class="w-full py-2 px-3 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors cursor-pointer">
+                        Dettagli &amp; Itinerari →
+                    </button>
+                </div>
+            `;
+        }
+
+        function fitMapToMarkers() {
+            const markerArr = Object.values(state.markers);
+            if (markerArr.length === 0) return;
+            const group = L.featureGroup(markerArr);
+            state.map.fitBounds(group.getBounds().pad(0.15));
+        }
+
+        function flyToMarker(id) {
+            const marker = state.markers[id];
+            if (!marker) return;
+            const b = state.allData.find(x => x.id === id);
+            state.map.flyTo(
+                [b.coordinate.lat, b.coordinate.lng],
+                14,
+                { duration: 1.2 }
+            );
+            setTimeout(() => marker.openPopup(), 800);
+        }
+
+        /* ══════════════════════════════════════════════════
+           CARDS
+           ══════════════════════════════════════════════════ */
+        function renderCards(data) {
+            dom.cardList.innerHTML = '';
+            dom.emptyState.classList.toggle('hidden', data.length > 0);
+            dom.counterText.textContent = `${data.length} bivacch${data.length === 1 ? 'o' : 'i'}`;
+
+            data.forEach((b, i) => {
+                const card = document.createElement('div');
+                card.className = `bivacco-card card-stagger animate-fade-in-up group relative p-4 rounded-xl bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 hover:border-emerald-400 dark:hover:border-emerald-500 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 cursor-pointer`;
+                card.dataset.id = b.id;
+
+                const badgeClass = b.difficolta_accesso === 'E' ? 'badge-e' : b.difficolta_accesso === 'EE' ? 'badge-ee' : 'badge-eea';
+
+                const hasWater = !b.stato_acqua.toLowerCase().includes('assente');
+                const waterIcon = hasWater
+                    ? '<span class="text-blue-500" title="Acqua disponibile"><svg class="w-3.5 h-3.5 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3c-4.97 5.5-7 8.5-7 12a7 7 0 1014 0c0-3.5-2.03-6.5-7-12z"/></svg></span>'
+                    : '<span class="text-slate-300 dark:text-slate-600" title="Acqua assente"><svg class="w-3.5 h-3.5 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3c-4.97 5.5-7 8.5-7 12a7 7 0 1014 0c0-3.5-2.03-6.5-7-12z"/><path stroke-linecap="round" d="M4 4l16 16"/></svg></span>';
+
+                card.innerHTML = `
+                    <div class="flex items-start justify-between mb-2">
+                        <div class="min-w-0 flex-1">
+                            <h3 class="font-semibold text-slate-900 dark:text-white text-sm leading-tight truncate group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">${b.nome}</h3>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">${b.gruppo_montuoso}</p>
+                        </div>
+                        <span class="${badgeClass} px-2 py-0.5 rounded-md text-[10px] font-bold flex-shrink-0 ml-2">${b.difficolta_accesso}</span>
+                    </div>
+                    <div class="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+                        <span class="flex items-center gap-1" title="Quota">
+                            <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 21l6-6 3 3 6-9 3 3"/></svg>
+                            ${b.quota_m} m
+                        </span>
+                        <span class="flex items-center gap-1" title="Posti letto">
+                            <svg class="w-3.5 h-3.5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19H5a2 2 0 01-2-2V7a2 2 0 012-2h14a2 2 0 012 2v4"/></svg>
+                            ${b.posti_letto.numero} posti
+                        </span>
+                        ${waterIcon}
+                        <span class="ml-auto text-[11px] text-slate-400 dark:text-slate-500">${b.stato_apertura}</span>
+                    </div>
+                    <div class="mt-3 flex gap-2">
+                        <button data-fly="${b.id}" class="flex-1 py-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 rounded-lg transition-colors" aria-label="Mostra ${b.nome} sulla mappa">
+                            <svg class="w-3.5 h-3.5 inline mr-1 -mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 0115 0z"/></svg>
+                            Mappa
+                        </button>
+                        <button data-open-modal="${b.id}" class="flex-1 py-1.5 text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-sm" aria-label="Dettagli ${b.nome}">
+                            Dettagli & Itinerari →
+                        </button>
+                    </div>
+                `;
+
+                dom.cardList.appendChild(card);
+            });
+        }
+
+        function setActiveCard(id) {
+            // Deseleziona precedente
+            $$('.bivacco-card').forEach(c => c.classList.remove('active'));
+            Object.entries(state.markers).forEach(([mid, m]) => {
+                const b = state.allData.find(x => x.id === parseInt(mid));
+                if (b) m.setIcon(createMarkerIcon(b.difficolta_accesso, false));
+            });
+
+            // Seleziona nuovo
+            state.activeCardId = id;
+            const card = $(`.bivacco-card[data-id="${id}"]`);
+            if (card) card.classList.add('active');
+
+            const b = state.allData.find(x => x.id === id);
+            if (b && state.markers[id]) {
+                state.markers[id].setIcon(createMarkerIcon(b.difficolta_accesso, true));
+            }
+        }
+
+        function scrollToCard(id) {
+            const card = $(`.bivacco-card[data-id="${id}"]`);
+            if (card) {
+                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
+        /* ══════════════════════════════════════════════════
+           FILTRI
+           ══════════════════════════════════════════════════ */
+        function populateRegioneFilter() {
+            const regioni = [...new Set(state.allData.map(b => b.regione).filter(Boolean))].sort();
+            regioni.forEach(r => {
+                const opt = document.createElement('option');
+                opt.value = r;
+                opt.textContent = r;
+                dom.filterRegione.appendChild(opt);
+            });
+        }
+
+        function populateGroupFilter() {
+            const groups = [...new Set(state.allData.map(b => b.gruppo_montuoso))].sort();
+            groups.forEach(g => {
+                const opt = document.createElement('option');
+                opt.value = g;
+                opt.textContent = g;
+                dom.filterGruppo.appendChild(opt);
+            });
+        }
+
+        function applyFilters() {
+            const searchTerm = (dom.searchInput.value || dom.searchInputMobile.value).toLowerCase().trim();
+            const selectedRegione = dom.filterRegione.value;
+            const selectedGroup = dom.filterGruppo.value;
+            const wantWater = dom.filterAcqua.checked;
+            const wantMoreBeds = dom.filterPosti.checked;
+            const diffFilters = state.activeDiffFilters;
+
+            state.filteredData = state.allData.filter(b => {
+                // Ricerca testuale
+                if (searchTerm) {
+                    const match = b.nome.toLowerCase().includes(searchTerm) ||
+                                  b.gruppo_montuoso.toLowerCase().includes(searchTerm);
+                    if (!match) return false;
+                }
+                // Regione
+                if (selectedRegione && b.regione !== selectedRegione) return false;
+                // Gruppo
+                if (selectedGroup && b.gruppo_montuoso !== selectedGroup) return false;
+                // Difficoltà
+                if (diffFilters.size > 0 && !diffFilters.has(b.difficolta_accesso)) return false;
+                // Acqua
+                if (wantWater && b.stato_acqua.toLowerCase().includes('assente')) return false;
+                // Posti
+                if (wantMoreBeds && b.posti_letto.numero <= 6) return false;
+
+                return true;
+            });
+
+            renderCards(state.filteredData);
+            addMarkers(state.filteredData);
+            fitMapToMarkers();
+            toggleResetButton();
+        }
+
+        function toggleResetButton() {
+            const hasFilters = dom.searchInput.value || dom.searchInputMobile.value ||
+                               dom.filterRegione.value || dom.filterGruppo.value || 
+                               dom.filterAcqua.checked || dom.filterPosti.checked || 
+                               state.activeDiffFilters.size > 0;
+            dom.resetFilters.classList.toggle('hidden', !hasFilters);
+        }
+
+        function resetAllFilters() {
+            dom.searchInput.value = '';
+            dom.searchInputMobile.value = '';
+            dom.filterRegione.value = '';
+            dom.filterGruppo.value = '';
+            dom.filterAcqua.checked = false;
+            dom.filterPosti.checked = false;
+            state.activeDiffFilters.clear();
+            $$('.diff-pill').forEach(p => {
+                p.classList.remove('bg-emerald-500', 'bg-amber-500', 'bg-rose-500', 'text-white', 'border-transparent');
+            });
+            applyFilters();
+        }
+
+        /* ══════════════════════════════════════════════════
+           MODALE
+           ══════════════════════════════════════════════════ */
+        function openModal(id) {
+            const b = state.allData.find(x => x.id === id);
+            if (!b) return;
+
+            // Popola dati
+            $('#modal-title').textContent = b.nome;
+            $('#modal-gruppo').textContent = b.gruppo_montuoso;
+            $('#modal-quota').textContent = b.quota_m + ' m';
+            $('#modal-coords').textContent = `${b.coordinate.lat.toFixed(4)}°N, ${b.coordinate.lng.toFixed(4)}°E`;
+            $('#modal-apertura').textContent = b.stato_apertura;
+            
+            let tipologiaStr = b.posti_letto.numero + ' posti';
+            if (b.posti_letto.tipologia.toLowerCase().includes('materassi')) {
+                tipologiaStr += ' (con materassi)';
+            }
+            $('#modal-tipologia').textContent = tipologiaStr;
+            $('#modal-acqua').textContent = b.stato_acqua;
+            $('#copy-label').textContent = 'Copia';
+
+            // Badge difficoltà
+            const badgeEl = $('#modal-badge-diff');
+            badgeEl.textContent = b.difficolta_accesso;
+            badgeEl.className = 'px-2 py-0.5 rounded-md text-xs font-bold';
+            if (b.difficolta_accesso === 'E') badgeEl.classList.add('bg-emerald-400/30', 'text-emerald-100');
+            else if (b.difficolta_accesso === 'EE') badgeEl.classList.add('bg-amber-400/30', 'text-amber-100');
+            else badgeEl.classList.add('bg-rose-400/30', 'text-rose-100');
+
+            // Dotazioni
+            const dotazioni = [
+                { key: 'stufa', label: 'Stufa a legna', icon: '🔥' },
+                { key: 'radio_emergenza', label: 'Radio emergenza', icon: '📻' },
+                { key: 'fotovoltaico', label: 'Fotovoltaico', icon: '☀️' },
+                { key: 'stoviglie', label: 'Stoviglie', icon: '🍽️' },
+                { key: 'legnaia', label: 'Legnaia', icon: '🪵' },
+            ];
+
+            $('#modal-dotazioni').innerHTML = dotazioni.map(d => {
+                const has = b.dotazioni[d.key];
+                return `
+                    <div class="flex items-center gap-2 p-2 rounded-lg ${has ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400' : 'bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500'}">
+                        <span class="text-base">${d.icon}</span>
+                        <span class="text-xs font-medium">${d.label}</span>
+                        ${has ? '<svg class="w-3.5 h-3.5 ml-auto text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>' : '<svg class="w-3.5 h-3.5 ml-auto text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg>'}
+                    </div>
+                `;
+            }).join('');
+
+            // Itinerari (accordion)
+            $('#modal-itinerari').innerHTML = b.itinerari.map((it, idx) => `
+                <div class="accordion-item rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+                    <button class="accordion-trigger w-full text-left p-3 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors" aria-expanded="false" aria-label="Espandi itinerario da ${it.partenza}">
+                        <div class="min-w-0 flex-1">
+                            <p class="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate">Da ${it.partenza}</p>
+                            <div class="flex items-center gap-3 mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                <span title="Dislivello">${it.dislivello}</span>
+                                <span>·</span>
+                                <span title="Tempo">${it.tempo}</span>
+                                <span>·</span>
+                                <span class="text-emerald-600 dark:text-emerald-400 font-medium">${it.segnavia}</span>
+                            </div>
+                        </div>
+                        <svg class="accordion-chevron w-4 h-4 text-slate-400 flex-shrink-0 ml-2 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div class="accordion-content px-3 text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-700/50">
+                        ${it.descrizione}
+                    </div>
+                </div>
+            `).join('');
+
+            // Copia coordinate
+            $('#copy-coords').dataset.coords = `${b.coordinate.lat.toFixed(4)}, ${b.coordinate.lng.toFixed(4)}`;
+
+            // Mostra modale
+            dom.modal.classList.remove('hidden');
+            dom.modal.classList.add('flex', 'animate-fade-in');
+            document.body.style.overflow = 'hidden';
+
+            // Focus trap
+            dom.modalClose.focus();
+        }
+
+        function closeModal() {
+            dom.modal.classList.add('hidden');
+            dom.modal.classList.remove('flex', 'animate-fade-in');
+            document.body.style.overflow = '';
+        }
+
+        /* ══════════════════════════════════════════════════
+           MOBILE TABS
+           ══════════════════════════════════════════════════ */
+        function switchMobileView(view) {
+            state.mobileView = view;
+
+            if (view === 'list') {
+                dom.sidebar.classList.remove('hidden');
+                dom.mapWrapper.classList.add('hidden');
+                dom.tabList.classList.add('text-emerald-600', 'dark:text-emerald-400', 'border-emerald-500');
+                dom.tabList.classList.remove('text-slate-500', 'dark:text-slate-400', 'border-transparent');
+                dom.tabMap.classList.remove('text-emerald-600', 'dark:text-emerald-400', 'border-emerald-500');
+                dom.tabMap.classList.add('text-slate-500', 'dark:text-slate-400', 'border-transparent');
+            } else {
+                dom.sidebar.classList.add('hidden');
+                dom.mapWrapper.classList.remove('hidden');
+                dom.mapWrapper.classList.add('block');
+                dom.tabMap.classList.add('text-emerald-600', 'dark:text-emerald-400', 'border-emerald-500');
+                dom.tabMap.classList.remove('text-slate-500', 'dark:text-slate-400', 'border-transparent');
+                dom.tabList.classList.remove('text-emerald-600', 'dark:text-emerald-400', 'border-emerald-500');
+                dom.tabList.classList.add('text-slate-500', 'dark:text-slate-400', 'border-transparent');
+
+                // Necessario per ricalcolare dimensioni mappa
+                setTimeout(() => state.map.invalidateSize(), 100);
+                fitMapToMarkers();
+            }
+        }
+
+        /* ══════════════════════════════════════════════════
+           EVENTS
+           ══════════════════════════════════════════════════ */
+        function bindEvents() {
+            // ── Ricerca ──
+            let searchTimeout;
+            const handleSearch = (e) => {
+                clearTimeout(searchTimeout);
+                // Sincronizza i due input
+                if (e.target === dom.searchInput) dom.searchInputMobile.value = e.target.value;
+                else dom.searchInput.value = e.target.value;
+                searchTimeout = setTimeout(applyFilters, 200);
+            };
+            dom.searchInput.addEventListener('input', handleSearch);
+            dom.searchInputMobile.addEventListener('input', handleSearch);
+
+            // ── Filtro regione e gruppo ──
+            dom.filterRegione.addEventListener('change', applyFilters);
+            dom.filterGruppo.addEventListener('change', applyFilters);
+
+            // ── Filtro difficoltà (pillole) ──
+            $$('.diff-pill').forEach(pill => {
+                pill.addEventListener('click', () => {
+                    const diff = pill.dataset.diff;
+                    const isActive = state.activeDiffFilters.has(diff);
+
+                    if (isActive) {
+                        state.activeDiffFilters.delete(diff);
+                        pill.classList.remove('text-white', 'border-transparent');
+                        if (diff === 'E') pill.classList.remove('bg-emerald-500');
+                        if (diff === 'EE') pill.classList.remove('bg-amber-500');
+                        if (diff === 'EEA') pill.classList.remove('bg-rose-500');
+                    } else {
+                        state.activeDiffFilters.add(diff);
+                        pill.classList.add('text-white', 'border-transparent');
+                        if (diff === 'E') pill.classList.add('bg-emerald-500');
+                        if (diff === 'EE') pill.classList.add('bg-amber-500');
+                        if (diff === 'EEA') pill.classList.add('bg-rose-500');
+                    }
+                    applyFilters();
+                });
+            });
+
+            // ── Toggle acqua e posti ──
+            dom.filterAcqua.addEventListener('change', applyFilters);
+            dom.filterPosti.addEventListener('change', applyFilters);
+
+            // ── Reset filtri ──
+            dom.resetFilters.addEventListener('click', resetAllFilters);
+
+            // ── Dark mode ──
+            dom.darkToggle.addEventListener('click', () => {
+                const isDark = !document.documentElement.classList.contains('dark');
+                applyDarkMode(isDark);
+            });
+
+            // ── Card click (delegazione) ──
+            dom.cardList.addEventListener('click', (e) => {
+                const flyBtn = e.target.closest('[data-fly]');
+                const modalBtn = e.target.closest('[data-open-modal]');
+                const card = e.target.closest('.bivacco-card');
+
+                if (modalBtn) {
+                    openModal(parseInt(modalBtn.dataset.openModal));
+                    return;
+                }
+                if (flyBtn) {
+                    const id = parseInt(flyBtn.dataset.fly);
+                    setActiveCard(id);
+                    flyToMarker(id);
+                    // Su mobile, passa alla vista mappa
+                    if (window.innerWidth < 768) switchMobileView('map');
+                    return;
+                }
+                if (card) {
+                    const id = parseInt(card.dataset.id);
+                    setActiveCard(id);
+                    flyToMarker(id);
+                }
+            });
+
+            // ── Popup click delegazione (per bottone "Dettagli" nel popup mappa) ──
+            state.map.on('popupopen', (e) => {
+                const popupEl = e.popup.getElement();
+                if (!popupEl) return;
+                const btn = popupEl.querySelector('[data-open-modal]');
+                if (btn) {
+                    btn.addEventListener('click', (ev) => {
+                        openModal(parseInt(btn.dataset.openModal));
+                    });
+                }
+            });
+
+            // ── Modale close ──
+            dom.modalClose.addEventListener('click', closeModal);
+            dom.modalBackdrop.addEventListener('click', closeModal);
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && !dom.modal.classList.contains('hidden')) {
+                    closeModal();
+                }
+            });
+
+            // ── Accordion (delegazione dal modale) ──
+            dom.modal.addEventListener('click', (e) => {
+                const trigger = e.target.closest('.accordion-trigger');
+                if (!trigger) return;
+
+                const item = trigger.closest('.accordion-item');
+                const content = item.querySelector('.accordion-content');
+                const chevron = trigger.querySelector('.accordion-chevron');
+                const isOpen = content.classList.contains('open');
+
+                // Chiudi tutti gli altri
+                $$('#modal-itinerari .accordion-content.open').forEach(c => {
+                    c.classList.remove('open');
+                    c.closest('.accordion-item').querySelector('.accordion-chevron').style.transform = '';
+                    c.closest('.accordion-item').querySelector('.accordion-trigger').setAttribute('aria-expanded', 'false');
+                });
+
+                if (!isOpen) {
+                    content.classList.add('open');
+                    chevron.style.transform = 'rotate(180deg)';
+                    trigger.setAttribute('aria-expanded', 'true');
+                }
+            });
+
+            // ── Copy coordinates ──
+            $('#copy-coords').addEventListener('click', function() {
+                const coords = this.dataset.coords;
+                navigator.clipboard.writeText(coords).then(() => {
+                    $('#copy-label').textContent = 'Copiato!';
+                    setTimeout(() => { $('#copy-label').textContent = 'Copia'; }, 2000);
+                }).catch(() => {
+                    // Fallback
+                    const textarea = document.createElement('textarea');
+                    textarea.value = coords;
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textarea);
+                    $('#copy-label').textContent = 'Copiato!';
+                    setTimeout(() => { $('#copy-label').textContent = 'Copia'; }, 2000);
+                });
+            });
+
+            // ── Tab mobile ──
+            dom.tabList.addEventListener('click', () => switchMobileView('list'));
+            dom.tabMap.addEventListener('click', () => switchMobileView('map'));
+
+            // ── Back to top ──
+            dom.sidebar.addEventListener('scroll', () => {
+                const show = dom.sidebar.scrollTop > 400;
+                dom.backToTop.classList.toggle('opacity-0', !show);
+                dom.backToTop.classList.toggle('translate-y-4', !show);
+                dom.backToTop.classList.toggle('pointer-events-none', !show);
+                dom.backToTop.classList.toggle('opacity-100', show);
+                dom.backToTop.classList.toggle('translate-y-0', show);
+            });
+            dom.backToTop.addEventListener('click', () => {
+                dom.sidebar.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+
+            // ── Resize → aggiorna mappa ──
+            window.addEventListener('resize', () => {
+                if (window.innerWidth >= 768) {
+                    dom.sidebar.classList.remove('hidden');
+                    dom.mapWrapper.classList.remove('hidden');
+                    dom.mapWrapper.classList.add('block');
+                    state.map.invalidateSize();
+                }
+            });
+        }
+
+        /* ══════════════════════════════════════════════════
+           BOOT
+           ══════════════════════════════════════════════════ */
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+    })();
+    </script>
+</body>
+</html>
