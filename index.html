@@ -238,10 +238,10 @@
     <!-- ═══════════════════════════════════════════════════ -->
     <!-- CONTENUTO PRINCIPALE (Split Screen)                -->
     <!-- ═══════════════════════════════════════════════════ -->
-    <main id="main-content" class="flex md:h-[calc(100vh-4rem)] mt-16">
+    <main id="main-content" class="flex h-[calc(100vh-108px)] md:h-[calc(100vh-4rem)] mt-[108px] md:mt-16 pt-[44px] md:pt-0">
 
         <!-- ── SIDEBAR ── -->
-        <aside id="sidebar" class="w-full md:w-[420px] lg:w-[440px] flex-shrink-0 overflow-y-auto bg-white dark:bg-slate-900 border-r border-slate-200/60 dark:border-slate-700/40 mt-[44px] md:mt-0 relative z-10">
+        <aside id="sidebar" class="w-full md:w-[420px] lg:w-[440px] flex-shrink-0 overflow-y-auto bg-white dark:bg-slate-900 border-r border-slate-200/60 dark:border-slate-700/40 relative z-10">
 
             <!-- Filtri -->
             <div id="filters-section" class="sticky top-0 z-10 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-b border-slate-100 dark:border-slate-800 p-4 space-y-3">
@@ -361,10 +361,16 @@
                         <svg class="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 0115 0z"/></svg>
                         <span id="modal-coords" class="font-mono text-slate-600 dark:text-slate-300"></span>
                     </div>
-                    <button id="copy-coords" class="flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-lg transition-colors" aria-label="Copia coordinate GPS">
-                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-                        <span id="copy-label">Copia</span>
-                    </button>
+                    <div class="flex items-center gap-1 sm:gap-2">
+                        <button id="copy-coords" class="flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-lg transition-colors" aria-label="Copia coordinate GPS">
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                            <span id="copy-label">Copia</span>
+                        </button>
+                        <a id="naviga-coords" href="#" target="_blank" rel="noopener noreferrer" class="flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors" aria-label="Naviga verso bivacco">
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+                            <span>Naviga</span>
+                        </a>
+                    </div>
                 </div>
 
                 <!-- Stato apertura e acqua -->
@@ -885,8 +891,10 @@
                 </div>
             `).join('');
 
-            // Copia coordinate
-            $('#copy-coords').dataset.coords = `${b.coordinate.lat.toFixed(4)}, ${b.coordinate.lng.toFixed(4)}`;
+            // Copia coordinate e link Naviga
+            const coordsStr = `${b.coordinate.lat.toFixed(4)}, ${b.coordinate.lng.toFixed(4)}`;
+            $('#copy-coords').dataset.coords = coordsStr;
+            $('#naviga-coords').href = `https://www.google.com/maps/search/?api=1&query=${b.coordinate.lat},${b.coordinate.lng}`;
 
             // Mostra modale
             dom.modal.classList.remove('hidden');
