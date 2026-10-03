@@ -1,0 +1,59 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* ── Scrollbar personalizzata ── */
+.custom-scrollbar::-webkit-scrollbar { width: 6px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 3px; }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #64748b; }
+.dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; }
+.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+/* ── Leaflet overrides ── */
+.leaflet-popup-content-wrapper {
+    border-radius: 12px !important;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.15) !important;
+    padding: 0 !important;
+    overflow: hidden;
+}
+.leaflet-popup-content { margin: 0 !important; width: 280px !important; }
+.leaflet-popup-tip { box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important; }
+.dark .leaflet-popup-content-wrapper { background: #1e293b !important; color: #e2e8f0 !important; }
+.dark .leaflet-popup-tip { background: #1e293b !important; }
+.dark .leaflet-control-zoom a { background: #1e293b !important; color: #e2e8f0 !important; border-color: #334155 !important; }
+.dark .leaflet-control-attribution { background: rgba(15,23,42,0.8) !important; color: #94a3b8 !important; }
+.dark .leaflet-control-attribution a { color: #94a3b8 !important; }
+
+/* ── Mappa dark mode filter ── */
+.dark .leaflet-tile-pane { filter: brightness(0.75) contrast(1.1) saturate(0.85); }
+
+/* ── Marker pulse ── */
+@keyframes markerPulse {
+    0% { box-shadow: 0 0 0 0 rgba(16,185,129,0.5); }
+    70% { box-shadow: 0 0 0 12px rgba(16,185,129,0); }
+    100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
+}

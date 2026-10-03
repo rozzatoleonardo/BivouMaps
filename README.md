@@ -1,62 +1,36 @@
-# 🏔️ Bivacchi Dolomiti Explorer
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-Database interattivo e guida ai bivacchi delle Dolomiti. Esplora su mappa, filtra per gruppo montuoso e difficoltà, scopri dotazioni e itinerari di accesso dettagliati.
+## Getting Started
 
-## ✨ Funzionalità
+First, run the development server:
 
-- **Mappa Interattiva** — Leaflet.js con tile OpenTopoMap per visualizzazione topografica
-- **Filtri Avanzati** — Per gruppo montuoso, difficoltà (E/EE/EEA), acqua e posti letto
-- **Ricerca Istantanea** — Trova bivacchi per nome o gruppo montuoso
-- **Schede Dettaglio** — Dotazioni complete, coordinate copiabili, itinerari con accordion
-- **Dark Mode** — Con salvataggio preferenza, rispetta le impostazioni di sistema
-- **Responsive** — Layout split-screen su desktop, tabs su mobile
-- **Zero Server** — 100% statico, funziona su GitHub Pages
-
-## 📁 Struttura Progetto
-
-```
-bivacchi-website/
-├── index.html           # App principale
-├── data/
-│   └── bivacchi.js      # Dataset 10 bivacchi reali
-├── .nojekyll            # Disabilita Jekyll su GitHub Pages
-└── README.md            # Questo file
+```bash
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
 ```
 
-## 🚀 Deploy su GitHub Pages
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-1. **Crea un repository** su GitHub (pubblico)
-2. **Carica i file** del progetto:
-   ```bash
-   git init
-   git add .
-   git commit -m "Bivacchi Dolomiti Explorer"
-   git branch -M main
-   git remote add origin https://github.com/TUO_USERNAME/bivacchi-dolomiti.git
-   git push -u origin main
-   ```
-3. **Attiva GitHub Pages:**
-   - Vai su **Settings → Pages**
-   - Source: **Deploy from a branch**
-   - Branch: `main` / Folder: `/ (root)`
-   - Clicca **Save**
-4. Il sito sarà disponibile su `https://tuousername.github.io/bivacchi-dolomiti/`
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-## 🛠️ Stack Tecnico
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-| Tecnologia | Versione | Utilizzo |
-|---|---|---|
-| HTML5 | — | Struttura semantica |
-| Tailwind CSS | CDN | Stile e responsive |
-| Leaflet.js | 1.9.4 | Mappa interattiva |
-| OpenTopoMap | — | Tile topografici |
-| Vanilla JS | ES6+ | Logica applicativa |
-| Google Fonts | Inter | Tipografia |
+## Learn More
 
-## ⚠️ Disclaimer
+To learn more about Next.js, take a look at the following resources:
 
-I dati sui bivacchi sono forniti a **scopo dimostrativo ed educativo**. Le coordinate, le quote e le informazioni sugli itinerari sono indicative. **Verificare sempre** le condizioni reali presso le sezioni CAI locali e i gestori dei rifugi prima di intraprendere escursioni in montagna.
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-## 📄 Licenza
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-Questo progetto è distribuito con licenza MIT.
+## Deploy on Vercel
+
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
