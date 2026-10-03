@@ -108,7 +108,7 @@ export default function Map({ bivacchi, activeId, onMarkerClick, onOpenModal }: 
                     }}
                 >
                     <Popup maxWidth={280} closeButton={false}>
-                        <div className="p-4 font-sans bg-white dark:bg-slate-800 rounded-xl">
+                        <div className="p-4 font-sans bg-white dark:bg-[#111] rounded-xl">
                             <div className="flex items-start justify-between mb-2">
                                 <h3 className="font-bold text-base text-slate-900 dark:text-white leading-tight">{b.nome}</h3>
                                 <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ml-2 flex-shrink-0 ${b.difficolta_accesso === 'E' ? 'bg-emerald-100 text-emerald-800' : b.difficolta_accesso === 'EE' ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800'}`}>{b.difficolta_accesso}</span>
@@ -139,3 +139,4 @@ export default function Map({ bivacchi, activeId, onMarkerClick, onOpenModal }: 
         </MapContainer>
     );
 }
+
