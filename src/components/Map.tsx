@@ -44,6 +44,22 @@ function MapController({ activeId, bivacchi }: { activeId: number | null, bivacc
     return null;
 }
 
+function MapResizer() {
+    const map = useMap();
+    
+    useEffect(() => {
+        const resizeObserver = new ResizeObserver(() => {
+            map.invalidateSize();
+        });
+        
+        resizeObserver.observe(map.getContainer());
+        
+        return () => resizeObserver.disconnect();
+    }, [map]);
+
+    return null;
+}
+
 interface MapProps {
     bivacchi: Bivacco[];
     activeId: number | null;
@@ -80,6 +96,7 @@ export default function Map({ bivacchi, activeId, onMarkerClick, onOpenModal }: 
             </LayersControl>
 
             <MapController activeId={activeId} bivacchi={bivacchi} />
+            <MapResizer />
 
             {bivacchi.map(b => (
                 <Marker 
