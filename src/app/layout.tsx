@@ -13,8 +13,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://bivou-maps.vercel.app/"),
   title: "BivouMaps",
   description: "Mappa e lista dei bivacchi italiani. Trova il tuo prossimo rifugio in montagna.",
+  alternates: {
+    canonical: "/",
+  },
   appleWebApp: {
     title: "BivouMaps",
     statusBarStyle: "default",
